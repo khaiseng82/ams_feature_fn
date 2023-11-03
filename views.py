@@ -2,10 +2,12 @@ from django.shortcuts import render
 # Refer the opc_client.py file and call the OPCUAClient Class
 from .opc_client import OPCUAClient
 from django.views import View
+from .database import dBConnect
 import time
 import datetime
 import signal
 import sys
+import mysql.connector
 #from opcua import Client
 #import threading  # Add this line to import the threading module
 #----Variable Declariation -----------------------------------------
@@ -16,11 +18,13 @@ ASM00_Flow_Id = "ns=3;i=16844032"
 ASM00_Pressure_Id = "ns=3;i=16844544"
 ASM00_Temperature_Id = "ns=3;i=16844288"
 ASM00_AccumFlow_Id = "ns=3;i=16843776"
+ASM00_Status_Id = "ns=3;i=16845056"
 
 ASM01_Flow_Id = "ns=3;i=16848896"
 ASM01_Pressure_Id = "ns=3;i=16849408"
 ASM01_Temperature_Id = "ns=3;i=16849152"
 ASM01_AccumFlow_Id = "ns=3;i=16848640"
+ASM01_Status_Id = "ns=3;i=16849920"
 
 #----- Vairable Declaration  ---------------------------------------
 
@@ -28,18 +32,20 @@ ASM00_Flow_Value = 0
 ASM00_Pressure_Value = 0
 ASM00_Temperature_Value = 0
 ASM00_AccumFlow_Value = 0 
+ASM00_Status_Value = 0 
 
 ASM01_Flow_Value = 0
 ASM01_Pressure_Value = 0
 ASM01_Temperature_Value = 0
 ASM01_AccumFlow_Value = 0
+ASM01_Status_Value = 0 
 
 
 
 # Define a list of node IDs to loop through
 node_ids = [
-    ASM00_Flow_Id, ASM00_Pressure_Id, ASM00_Temperature_Id, ASM00_AccumFlow_Id,
-    ASM01_Flow_Id, ASM01_Pressure_Id, ASM01_Temperature_Id, ASM01_AccumFlow_Id
+    ASM00_Flow_Id, ASM00_Pressure_Id, ASM00_Temperature_Id, ASM00_AccumFlow_Id, ASM00_Status_Value,
+    ASM01_Flow_Id, ASM01_Pressure_Id, ASM01_Temperature_Id, ASM01_AccumFlow_Id, ASM01_Status_Value
 ]
 
 
@@ -102,7 +108,7 @@ print("Variable Value:" ,value)
 '''
 #--------------------------------------------------------------------------------------
 
-'''
+
 
 try:
     opcua_client.connect()
@@ -113,12 +119,14 @@ try:
     ASM00_Pressure_Data = opcua_client.client.get_node(ASM00_Pressure_Id)
     ASM00_Temperature_Data = opcua_client.client.get_node(ASM00_Temperature_Id)
     ASM00_AccumFlow_Data = opcua_client.client.get_node(ASM00_AccumFlow_Id)
+    ASM00_Status_Data = opcua_client.client.get_node(ASM00_Status_Id)
 
 
     ASM01_Flow_Data = opcua_client.client.get_node(ASM01_Flow_Id)
     ASM01_Pressure_Data = opcua_client.client.get_node(ASM01_Pressure_Id)
     ASM01_Temperature_Data = opcua_client.client.get_node(ASM01_Temperature_Id)
     ASM01_AccumFlow_Data = opcua_client.client.get_node(ASM01_AccumFlow_Id)
+    ASM01_Status_Data = opcua_client.client.get_node(ASM01_Status_Id)
 
 
    
@@ -133,13 +141,19 @@ try:
             ASM00_Pressure_Value = ASM00_Pressure_Data.get_value()
             ASM00_Temperature_Value = ASM00_Temperature_Data.get_value()
             ASM00_AccumFlow_Value = ASM00_AccumFlow_Data.get_value()
+            ASM00_Status_Value = ASM00_Status_Data.get_value()
 
 
             ASM01_Flow_Value = ASM01_Flow_Data.get_value()
             ASM01_Pressure_Value = ASM01_Pressure_Data.get_value()
             ASM01_Temperature_Value = ASM01_Temperature_Data.get_value()
             ASM01_AccumFlow_Value = ASM01_AccumFlow_Data.get_value()
+            ASM01_Status_Value = ASM01_Status_Data.get_value()
 
+            dBConnect("CB", ASM00_Flow_Value, ASM00_Pressure_Value, ASM00_Temperature_Value, 
+                ASM00_AccumFlow_Value, ASM00_Status_Value, current_time)
+            dBConnect("RC", ASM01_Flow_Value, ASM01_Pressure_Value, ASM01_Temperature_Value, 
+                ASM01_AccumFlow_Value, ASM01_Status_Value, current_time)
 
 
             #value = node.get_value()
@@ -148,14 +162,16 @@ try:
             print("Cell Base Flow Value:", ASM00_Flow_Value)
             print("Cell Base Pressure Value:", ASM00_Pressure_Value)
             print("Cell Base Temperature Value:", ASM00_Temperature_Value)
-            print("Cell Base Accumulation flow  Value:", ASM00_AccumFlow_Value)
+            print("Cell Base Accumulation Flow Value:", ASM00_AccumFlow_Value)
+            print("Cell Base Status Value:", ASM00_Status_Value)
             print("CurrentTime:", current_time)
 
 
             print("RC Flow Value:", ASM01_Flow_Value)
             print("RC Pressure Value:", ASM01_Pressure_Value)
             print("RC Temperature Value:", ASM01_Temperature_Value)
-            print("RC Accumulation flow  Value:", ASM01_AccumFlow_Value)
+            print("RC Accumulation Flow Value:", ASM01_AccumFlow_Value)
+            print("RC Status Value:", ASM01_Status_Value)
             print("CurrentTime:", current_time)
 
             session.close()
@@ -190,7 +206,7 @@ except ua.UaError as e:
 finally:
     session.close()
 
-'''
+
 
 
 #-------------------------------------------------------------------------------------------
@@ -244,4 +260,7 @@ def opcua_data_view(request):
     
     # Render the HTML template with the data from the node Value to home.html
     return render(request, "home.html", context)
+
+
+
 
