@@ -54,5 +54,5 @@ class OPCUAClient:
         return handle
     # Disconnecting function
     def disconnect(self):
-        print("Is Dsiconnecting")
+        print("Is Disconnecting")
         self.client.disconnect()

@@ -70,6 +70,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'amsSystem.wsgi.application'
 
+CSRF_COOKIE_NAME = "test"
+
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
